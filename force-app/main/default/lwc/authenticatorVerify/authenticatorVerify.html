@@ -1,0 +1,38 @@
+<template>
+    <lightning-card title={title} icon-name="standard:authenticator">
+        <div class="slds-p-around_medium">
+            <p class="slds-text-body_regular slds-m-bottom_medium slds-text-color_weak">
+                Enter the 6-digit code from your Salesforce Authenticator app.
+            </p>
+
+            <div class="slds-form-element slds-m-bottom_medium">
+                <label class="slds-form-element__label" for="verify-code-input">Verification code</label>
+                <div class="slds-form-element__control slds-m-top_x-small">
+                    <lightning-input
+                        id="verify-code-input"
+                        type="text"
+                        max-length="6"
+                        placeholder="000000"
+                        value={verificationCode}
+                        onchange={handleCodeChange}
+                        pattern="[0-9]{6}"
+                        message-when-pattern-mismatch="Enter exactly 6 digits">
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="slds-m-top_medium">
+                <template if:true={isLoading}>
+                    <lightning-spinner alternative-text="Verifying" size="small"></lightning-spinner>
+                </template>
+                <template if:false={isLoading}>
+                    <lightning-button
+                        variant="brand"
+                        label="Verify"
+                        onclick={handleVerify}>
+                    </lightning-button>
+                </template>
+            </div>
+        </div>
+    </lightning-card>
+</template>

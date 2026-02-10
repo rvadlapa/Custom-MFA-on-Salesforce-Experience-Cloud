@@ -1,0 +1,217 @@
+<template>
+    <lightning-card title={title} icon-name="standard:authenticator">
+        
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_large">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Initial View - Not Registered -->
+        <template if:true={showInitialView}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-align_center slds-m-bottom_medium">
+                    <lightning-icon icon-name="utility:setup" size="large" class="slds-m-bottom_small"></lightning-icon>
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        Secure Your Account
+                    </h2>
+                    <p class="slds-text-body_regular slds-text-color_weak">
+                        Set up the Salesforce Authenticator app for enhanced security.
+                        You'll receive push notifications to verify your identity.
+                    </p>
+                </div>
+
+                <div class="slds-m-top_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">What you'll need:</h3>
+                    <ul class="mfa-list slds-m-bottom_medium">
+                        <li>Salesforce Authenticator app installed on your mobile device</li>
+                        <li>Camera access to scan QR code (or manual entry option available)</li>
+                        <li>About 2 minutes to complete setup</li>
+                    </ul>
+                </div>
+
+                <div class="slds-text-align_center slds-m-top_large">
+                    <lightning-button 
+                        variant="brand" 
+                        label="Get Started"
+                        onclick={handleStartRegistration}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                </div>
+
+                <div class="slds-m-top_medium slds-text-align_center">
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        Don't have the app? 
+                        <a href="https://help.salesforce.com/s/articleView?id=sf.salesforce_authenticator_overview.htm" 
+                           target="_blank" 
+                           class="slds-text-link">
+                            Download Salesforce Authenticator
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </template>
+
+        <!-- Registered View -->
+        <template if:true={showRegisteredView}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-align_center">
+                    <lightning-icon 
+                        icon-name="utility:success" 
+                        size="large" 
+                        variant="success"
+                        class="slds-m-bottom_small">
+                    </lightning-icon>
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small slds-text-color_success">
+                        Authenticator Registered
+                    </h2>
+                    <p class="slds-text-body_regular slds-text-color_weak">
+                        Your account is protected with Salesforce Authenticator.
+                        You'll receive push notifications when signing in.
+                    </p>
+                </div>
+
+                <div class="slds-m-top_large slds-text-align_center">
+                    <lightning-button 
+                        variant="destructive-text" 
+                        label="Remove Authenticator"
+                        onclick={handleRemoveRegistration}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Registration Flow - QR Code Step -->
+        <template if:true={showQRCodeStep}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-align_center slds-m-bottom_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        Step 1: Scan QR Code
+                    </h2>
+                    <p class="slds-text-body_regular slds-text-color_weak">
+                        Open the Salesforce Authenticator app and scan this QR code
+                    </p>
+                </div>
+
+                <!-- QR Code Display -->
+                <div class="slds-align_absolute-center slds-m-vertical_medium">
+                    <div class="qr-code-container">
+                        <template if:true={qrCodeUrl}>
+                            <img src={qrCodeUrl} alt="QR Code for Salesforce Authenticator" class="qr-code-image"/>
+                        </template>
+                        <template if:true={showQrLoading}>
+                            <div class="slds-text-align_center slds-p-around_large">
+                                <lightning-spinner alternative-text="Generating QR Code" size="small"></lightning-spinner>
+                            </div>
+                        </template>
+                        <template if:true={showQrUnavailable}>
+                            <div class="slds-text-align_center slds-p-around_medium">
+                                <p class="slds-text-body_small slds-text-color_weak">QR image unavailable. Use manual entry below.</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Account Name Display -->
+                <div class="slds-text-align_center slds-m-bottom_medium">
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        Account: <strong>{accountName}</strong>
+                    </p>
+                </div>
+
+                <!-- Manual Entry Option -->
+                <div class="slds-m-top_medium">
+                    <div class="slds-text-align_center">
+                        <lightning-button 
+                            variant="neutral" 
+                            label={manualEntryButtonLabel}
+                            onclick={handleToggleManualEntry}
+                            class="slds-m-bottom_small">
+                        </lightning-button>
+                    </div>
+
+                    <template if:true={showManualEntry}>
+                        <div class="manual-entry-section slds-box slds-theme_shade slds-m-top_small">
+                            <p class="slds-text-body_small slds-m-bottom_x-small">
+                                <strong>Manual Entry Key:</strong>
+                            </p>
+                            <div class="slds-grid slds-grid_align-spread">
+                                <code class="manual-entry-key slds-text-body_regular">
+                                    {manualEntryKey}
+                                </code>
+                                <lightning-button-icon
+                                    icon-name="utility:copy"
+                                    variant="bare"
+                                    alternative-text="Copy to clipboard"
+                                    onclick={handleCopyKey}
+                                    class="slds-m-left_small">
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="slds-text-align_center slds-m-top_large">
+                    <lightning-button 
+                        variant="brand" 
+                        label={scannedCodeButtonLabel}
+                        onclick={handleScannedQRCode}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button 
+                        variant="neutral" 
+                        label="Cancel"
+                        onclick={handleCancelRegistration}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Registration Flow - Verification Step -->
+        <template if:true={showVerificationStep}>
+            <div class="slds-p-around_medium">
+                <div class="slds-text-align_center slds-m-bottom_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+                        Step 2: Enter Verification Code
+                    </h2>
+                    <p class="slds-text-body_regular slds-text-color_weak slds-m-bottom_medium">
+                        Enter the 6-digit code from your Salesforce Authenticator app.
+                    </p>
+                </div>
+
+                <div class="slds-m-vertical_medium slds-form-element">
+                    <label class="slds-form-element__label" for="verification-code-input">Verification code</label>
+                    <div class="slds-form-element__control slds-m-top_x-small">
+                        <lightning-input
+                            id="verification-code-input"
+                            type="text"
+                            max-length="6"
+                            placeholder="000000"
+                            value={verificationCode}
+                            onchange={handleVerificationCodeChange}
+                            pattern="[0-9]{6}"
+                            message-when-pattern-mismatch="Enter exactly 6 digits">
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <div class="slds-text-align_center slds-m-top_large">
+                    <lightning-button
+                        variant="brand"
+                        label="Verify"
+                        onclick={handleVerifyManually}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="neutral"
+                        label="Cancel"
+                        onclick={handleCancelRegistration}>
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+    </lightning-card>
+</template>
